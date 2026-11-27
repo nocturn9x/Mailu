@@ -1,6 +1,6 @@
 from werkzeug.utils import redirect
 from mailu import models, utils, auth_flow, signin, webmail, passkeys as passkey_utils
-from mailu.sso import sso, forms
+from mailu.sso import sso, forms, oidc
 from mailu.ui import access
 
 from flask import current_app as app
@@ -68,10 +68,10 @@ def login(target):
         username = form.email.data
         if username != device_cookie_username and utils.limiter.should_rate_limit_ip(client_ip):
             flask.flash(_('Too many attempts from your IP (rate-limit)'), 'error')
-            return flask.render_template('login.html', form=form, fields=fields)
+            return flask.render_template('login.html', form=form, fields=fields, oidc_enabled=oidc.enabled(), oidc_target=target)
         if utils.limiter.should_rate_limit_user(username, client_ip, device_cookie, device_cookie_username):
             flask.flash(_('Too many attempts for this user (rate-limit)'), 'error')
-            return flask.render_template('login.html', form=form, fields=fields)
+            return flask.render_template('login.html', form=form, fields=fields, oidc_enabled=oidc.enabled(), oidc_target=target)
         user = models.User.login(username, form.pw.data)
         if user:
             login_destination = destination
@@ -109,7 +109,33 @@ def login(target):
             else:
                 flask.current_app.logger.info(f'Login attempt for: {username}/sso/{flask.request.headers.get("X-Forwarded-Proto")} from: {client_ip}/{client_port}: failed: badauth: {utils.truncated_pw_hash(form.pw.data)}')
                 flask.flash(_('Wrong e-mail or password'), 'error')
-    return flask.render_template('login.html', form=form, fields=fields)
+    return flask.render_template('login.html', form=form, fields=fields, oidc_enabled=oidc.enabled(), oidc_target=target)
+
+@sso.route('/oidc/login', methods=['GET'])
+def oidc_login():
+    if not oidc.enabled():
+        flask.abort(404)
+    target = flask.request.args.get('target')
+    if target:
+        signin.target_path(target)
+        signin.clear()
+        signin.remember(signin.target_path(target))
+    elif 'url' in flask.request.args and 'homepage' not in flask.request.args:
+        signin.remember(flask.request.args['url'])
+    if flask_login.current_user.is_authenticated:
+        return flask.redirect(signin.resolve(target))
+    try:
+        return flask.redirect(oidc.authorize_url())
+    except Exception:
+        flask.current_app.logger.exception('OIDC login failed')
+        flask.flash(_('OpenID Connect login failed'), 'error')
+        return flask.redirect(flask.url_for('sso.login'))
+
+@sso.route('/oidc/callback', methods=['GET'])
+def oidc_callback():
+    if not oidc.enabled():
+        flask.abort(404)
+    return oidc.handle_callback(clear_webmail_cookies=_clear_webmail_cookies)
 
 @sso.route('/pw_change', methods=['GET', 'POST'])
 @access.authenticated

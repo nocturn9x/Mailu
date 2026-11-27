@@ -16,6 +16,9 @@
   <div class="d-grid gap-3 mt-4">
     {% if not config['PASSKEY_REQUIRED'] %}{{ form.submit(class_="btn btn-primary") }}{% endif %}
     {% block extra_login_options %}{% endblock %}
+    {% if oidc_enabled %}
+    <a class="oidc-login btn btn-outline-primary" data-base-href="{{ url_for('sso.oidc_login') }}" href="{{ url_for('sso.oidc_login', target=oidc_target) if oidc_target else url_for('sso.oidc_login') }}"><i class="fa-solid fa-right-to-bracket me-1" aria-hidden="true"></i>{% trans %}Sign in with OpenID Connect{% endtrans %}</a>
+    {% endif %}
   </div>
 </form>
 {% endblock %}

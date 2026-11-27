@@ -545,6 +545,54 @@ The ``mailu_signin_target`` cookie remembers only the selected application for o
 
 Use ``PROXY_AUTH_LOGOUT_URL`` (default: unset) to redirect users to a specific URL after they have been logged out.
 
+.. _openid_connect_authentication:
+
+OpenID Connect authentication
+-----------------------------
+
+Set ``OIDC_ENABLED=true`` to enable OpenID Connect Core 1.0 browser sign-in
+(``/sso/oidc/login`` and ``/sso/oidc/callback``) for the admin UI, webmail, and
+Mailu's native mail-client OAuth2 consent flow. Mail protocols (SMTP, IMAP,
+POP3, submission, and ManageSieve) continue to use Mailu OAuth2 tokens,
+passwords, or app tokens.
+
+Point ``OIDC_DISCOVERY_URL`` at the provider's ``.well-known/openid-configuration``
+endpoint, or set ``OIDC_AUTHORIZATION_ENDPOINT``, ``OIDC_TOKEN_ENDPOINT``,
+``OIDC_JWKS_URI``, and optionally ``OIDC_USERINFO_ENDPOINT`` and ``OIDC_ISSUER``
+explicitly. Configure ``OIDC_CLIENT_ID``, ``OIDC_CLIENT_SECRET``, and
+``OIDC_CLIENT_AUTH_METHOD`` (``client_secret_basic``, ``client_secret_post``, or
+``none``). ``OIDC_REDIRECT_URI`` defaults to ``/sso/oidc/callback`` on the Mailu
+host and may be set explicitly behind a reverse proxy. When ``OIDC_ENABLED=true``,
+Mailu sets ``SESSION_COOKIE_SAMESITE=Lax`` so the session survives cross-site
+redirects back from the identity provider.
+
+Mailu uses the authorization-code flow with PKCE (``S256``), ``state``, and
+``nonce``, and verifies ID tokens against the provider JWKS.
+``OIDC_JWT_ALGORITHMS`` defaults to ``EdDSA,ES256,RS256`` (asymmetric signing
+only; symmetric ``HS*`` algorithms and ``none`` are always rejected).
+``OIDC_JWKS_CACHE_SECONDS`` (default: ``3600``) controls discovery and JWKS
+cache lifetime, and ``OIDC_CLOCK_SKEW_SECONDS`` (default: ``60``) controls time
+claim leeway.
+
+``OIDC_SCOPES`` defaults to ``openid email profile``, ``OIDC_EMAIL_CLAIM``
+defaults to ``email``, ``OIDC_DISPLAY_NAME_CLAIM`` defaults to ``name``, and
+``OIDC_REQUIRE_EMAIL_VERIFIED`` defaults to ``true``. By default, only existing
+enabled Mailu users can sign in; set ``OIDC_CREATE_USER=true`` to create users
+automatically in existing Mailu domains (respecting ``Domain.max_users``), and
+optionally restrict accepted domains with ``OIDC_ALLOWED_DOMAINS``.
+
+Example configuration for Authentik (configure an asymmetric ``EdDSA``,
+``ES256``, or ``RS256`` signing key on the provider and redirect URI
+``https://<mail-host>/sso/oidc/callback``):
+
+.. code-block:: text
+
+   OIDC_ENABLED=true
+   OIDC_DISCOVERY_URL=https://<auth-host>/application/o/<slug>/.well-known/openid-configuration
+   OIDC_CLIENT_ID=<client-id>
+   OIDC_CLIENT_SECRET=<client-secret>
+   OIDC_REDIRECT_URI=https://<mail-host>/sso/oidc/callback
+
 OAuth2 authentication for native mail clients
 ----------------------------------------------
 

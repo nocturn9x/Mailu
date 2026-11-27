@@ -15,6 +15,19 @@
   const destinationFields = [...document.querySelectorAll('[name="destination"]')];
   const selectedDestination = () => destinationFields.find(field => field.checked)?.value || 'webmail';
   const explicitDestinationField = document.getElementById('destination_explicit');
+  const oidcLinks = [...document.querySelectorAll('.oidc-login')];
+  const syncOidcLinks = () => {
+    const target = selectedDestination();
+    oidcLinks.forEach(link => {
+      const url = new URL(link.dataset.baseHref || link.getAttribute('href'), window.location.origin);
+      if (explicitDestinationField.value === '1' && target) {
+        url.searchParams.set('target', target);
+      } else {
+        url.searchParams.delete('target');
+      }
+      link.href = url.pathname + url.search;
+    });
+  };
   const emailField = document.getElementById('email');
   let passwordRequired = {{ config['PASSKEY_REQUIRED'] | tojson }};
   const form = document.querySelector('form.form');
@@ -196,10 +209,12 @@
   form.addEventListener('submit', cancelAttempt);
   destinationFields.forEach(destinationField => destinationField.addEventListener('change', () => {
     explicitDestinationField.value = '1';
+    syncOidcLinks();
     cancelAttempt();
     clearStatus();
     beginConditionalLogin();
   }));
+  syncOidcLinks();
   beginConditionalLogin();
 })();
 </script>

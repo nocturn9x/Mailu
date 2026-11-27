@@ -1,0 +1,1 @@
+Add native OpenID Connect Core 1.0 web login (``/sso/oidc/login`` and ``/sso/oidc/callback``) with PKCE, asymmetric JWKS ID-token validation (``EdDSA``, ``ES256``, ``RS256``), optional UserInfo merging, and domain-restricted JIT user creation.
