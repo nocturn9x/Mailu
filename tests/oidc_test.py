@@ -702,3 +702,8 @@ def test_oidc_rejects_external_url_and_supports_public_client_none(app, client, 
     assert rv.headers['Location'] == '/webmail'
     assert captured['auth'] is None
     assert 'client_secret' not in captured['data']
+
+def test_start_py_forwards_oidc_client_secret():
+    source = open('/start.py').read() if __import__('os').path.exists('/start.py') else open('core/admin/start.py').read()
+    assert '"OIDC_CLIENT_SECRET"' in source
+    assert '"OIDC_CLIENT_SECRET_FILE"' in source
