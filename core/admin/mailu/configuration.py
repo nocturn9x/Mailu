@@ -81,6 +81,7 @@ DEFAULT_CONFIG = {
     'AUTH_REQUIRE_TOKENS': True,
     'API': False,
     'API_TOKEN': None,
+    'SCIM_DELETE_ACTION': 'disable',
     'FULL_TEXT_SEARCH': 'en',
     'FULL_TEXT_SEARCH_ATTACHMENTS': False,
     'LOG_LEVEL': 'INFO',
@@ -186,6 +187,10 @@ class ConfigManager:
             raise ValueError('OAUTH2_REFRESH_TOKEN_IDLE must be a positive number of seconds')
         self.config['QUARANTINE_RETENTION_DAYS'] = int(self.config['QUARANTINE_RETENTION_DAYS'])
         self.config['QUARANTINE_MAX_MESSAGE_BYTES'] = int(self.config['QUARANTINE_MAX_MESSAGE_BYTES'])
+        scim_delete_action = str(self.config['SCIM_DELETE_ACTION']).strip().lower()
+        if scim_delete_action not in ('disable', 'delete'):
+            raise ValueError("SCIM_DELETE_ACTION must be 'disable' or 'delete'")
+        self.config['SCIM_DELETE_ACTION'] = scim_delete_action
 
         # automatically set the sqlalchemy string
         if self.config['DB_FLAVOR']:

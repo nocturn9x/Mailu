@@ -1,0 +1,1 @@
+Add a Users-only SCIM 2.0 provisioning API under ``/api/scim/v2`` supporting user lifecycle operations, weak ``ETag`` / ``If-Match`` preconditions, and configurable deprovisioning via ``SCIM_DELETE_ACTION`` (``disable`` or ``delete``).
