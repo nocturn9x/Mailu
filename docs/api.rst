@@ -50,3 +50,29 @@ The Mailu API comes with an in-built SwaggerUI. It is a web client that allows
 anyone to visualize and interact with the Mailu API.
 
 The API is accessible via the URL: https://myserver/api/
+
+
+SCIM 2.0 User Provisioning
+--------------------------
+
+Mailu exposes a Users-only SCIM 2.0 (RFC 7643 / RFC 7644) provisioning API under
+``/api/scim/v2`` whenever ``API=true`` and ``API_TOKEN`` are configured.
+Identity providers such as Authentik can authenticate using
+``Authorization: Bearer <API_TOKEN>`` against ``https://mail.example.com/api/scim/v2``.
+
+Supported endpoints:
+
+* ``GET /api/scim/v2/ServiceProviderConfig``, ``GET /api/scim/v2/ResourceTypes``,
+  ``GET /api/scim/v2/ResourceTypes/User``, ``GET /api/scim/v2/Schemas``, and
+  ``GET /api/scim/v2/Schemas/urn:ietf:params:scim:schemas:core:2.0:User``
+* ``GET /api/scim/v2/Users`` (supports ``startIndex``, ``count``, and equality
+  filters on ``userName``, ``id``, ``emails.value``, ``emails[value eq "..."]``,
+  and ``active``)
+* ``POST /api/scim/v2/Users`` (provisions a user on an existing Mailu domain;
+  returns ``409 Conflict`` with ``scimType: "uniqueness"`` if the user already exists)
+* ``GET``, ``PUT``, ``PATCH``, and ``DELETE`` on ``/api/scim/v2/Users/{email}``
+  with weak ``ETag`` / ``If-Match`` optimistic concurrency support
+
+By default, ``DELETE /api/scim/v2/Users/{email}`` disables the account
+(preserving mailbox data) and revokes active web sessions and OAuth2 grants.
+Set ``SCIM_DELETE_ACTION=delete`` to permanently delete the user record instead.

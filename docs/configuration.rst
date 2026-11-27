@@ -283,6 +283,12 @@ The minimum length is 3 characters.
 This token must be passed as request header to the API as authentication token.
 This is a mandatory setting for using the RESTful API.
 
+The ``SCIM_DELETE_ACTION`` (default: ``disable``) setting controls how
+``DELETE /api/scim/v2/Users/{email}`` deprovisions a user account. When set to
+``disable``, the user is disabled (keeping the mailbox intact) and active web
+sessions and OAuth2 grants are revoked. When set to ``delete``, the user record
+is deleted from the database, freeing the address for reuse.
+
 The ``CREDENTIAL_ROUNDS`` (default: 13) setting is the number of rounds used by the
 password hashing scheme. The number of rounds can be reduced in case faster
 authentication is needed or increased when additional protection is desired.
